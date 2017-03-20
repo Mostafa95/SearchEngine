@@ -640,6 +640,8 @@ class PorterStemmer {
 		y=s.stem(y);
 		System.out.println(y);
 
+		// To Be Handled: 7rof al gr
+
 	}
 }
 
