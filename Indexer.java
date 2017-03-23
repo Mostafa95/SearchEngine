@@ -11,6 +11,7 @@ import java.sql.SQLException;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import org.jsoup.Jsoup;
@@ -45,12 +46,12 @@ public class Indexer {
             //con.URLdelete("3");
             //con.get();
 
-            int MAXStrSz = 16, MINStrSz = 3;
-            String parser = "[ `~!@#$^&*()-=>><<{};:\"\\,.<>\\|]";
+            int MAXStrSz = 16, MINStrSz = 3, PageRank = 0;
+            String parser = "[ `~!@#$^&*()-=>><<{};:\"\\,.<>\\|]", URL_Link = "http://jsoup.org/";
             HashMap Hash = new HashMap();
             PorterStemmer _Stem = new PorterStemmer();
 
-            Document doc = Jsoup.connect("http://jsoup.org/").get();
+            Document doc = Jsoup.connect(URL_Link).get();
 
             // parsing entire document , pri +1
             String PageText = doc.body().text();
@@ -64,7 +65,7 @@ public class Indexer {
                 // stem
 
                 Word = Word.toLowerCase();
-                Word= _Stem.stem(Word);
+                Word = _Stem.stem(Word);
                 Object val = Hash.get(Word);
                 if (val == null) {
                     Hash.put(Word, 1);
@@ -84,8 +85,8 @@ public class Indexer {
                     continue;
                 }
                 //stem
-                  Word= Word.toLowerCase();
-                  Word= _Stem.stem(Word);
+                Word = Word.toLowerCase();
+                Word = _Stem.stem(Word);
 
                 Object val = Hash.get(Word);
                 if (val == null) {
@@ -107,8 +108,8 @@ public class Indexer {
                 }
                 //stem
 
-                 Word= Word.toLowerCase();
-                 Word= _Stem.stem(Word);
+                Word = Word.toLowerCase();
+                Word = _Stem.stem(Word);
                 Object val = Hash.get(Word);
                 if (val == null) {
                     Hash.put(Word, 100);
@@ -117,7 +118,7 @@ public class Indexer {
                 }
                 // System.out.println(e.text());
             }
-//            // parse meta // pri+1000
+//            // parse title // pri+1000
             Elements title = doc.getElementsByTag("title");
             String Wordstitle[], titletext;
             titletext = title.text();
@@ -127,8 +128,8 @@ public class Indexer {
                     continue;
                 }
                 //stem
-                e= e.toLowerCase();
-                   e= _Stem.stem(e);
+                e = e.toLowerCase();
+                e = _Stem.stem(e);
 
                 Object val = Hash.get(e);
                 if (val == null) {
@@ -138,25 +139,54 @@ public class Indexer {
                 }
                 // System.out.println(e.text());
             }
-            // test hash Table
+            ResultSet rs;
+            System.out.println(Hash.size());
             Iterator it = Hash.entrySet().iterator();
             while (it.hasNext()) {
                 Map.Entry pair = (Map.Entry) it.next();
-                System.out.println(pair.getKey() + " = " + pair.getValue());
+                String WordName = pair.getKey().toString();
+                int WordFreq = (int) pair.getValue();
+               
+                rs = con.WordSelect(WordName);
+
+                if (!rs.next()) { // Word doesn't exist in DB
+                    con.WordInsert(WordName);
+                    
+
+                    ResultSet rs2 = con.WordSelect(WordName);
+                    
+
+                    if (rs2.next() == false) {
+                        System.out.println("False");
+                    } else {
+                        String WordID = rs2.getString("WordID");
+                      
+                        con.URLInsert(URL_Link, WordFreq, WordID, PageRank);
+                       
+                    }
+                } else {
+                    String WordID = rs.getString("WordID");
+                    con.URLInsert(URL_Link, WordFreq, WordID, PageRank);
+                }
+                
                 it.remove(); // avoids a ConcurrentModificationException
             }
-            for (int i = 0; i < Hash.size(); i++) {
-                System.out.println(Hash.get(i));
-            }
+
 //            for (Element e : Hyperlink) {
 //                System.out.println(e.text());
 //            }
-            con.GetCon().close();
+ 
+            try {
+                con.GetCon().close();
+            } catch (SQLException se) {
+                System.out.println("NOT CLosed !!");
+            }
+            
         } catch (Exception ex) {
-            Logger.getLogger(Indexer.class.getName()).log(Level.SEVERE, null, ex);
+            
+            System.out.println("Error");
         }
 
     }
-
 }
 
