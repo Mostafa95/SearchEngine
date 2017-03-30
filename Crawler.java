@@ -118,7 +118,7 @@ public class Crawler extends Thread {
                 processPage(pair.getKey().toString(), depth + 1);
             }
 
-            it.remove();// avoids a ConcurrentModificationException
+           // it.remove();// avoids a ConcurrentModificationException
         }
 
         // try (BufferedWriter statefile = new BufferedWriter(
@@ -170,9 +170,11 @@ public class Crawler extends Thread {
                 processPage(pair.getKey().toString(), 1);
                 break;
             }
-            it.remove(); // avoids a ConcurrentModificationException
+           // it.remove(); // avoids a ConcurrentModificationException
         }
 
     }
 }
+
+
 
