@@ -1,4 +1,4 @@
-package indexer;
+package sephase1;
 
 import java.sql.Connection;
 import java.sql.DriverManager;
@@ -26,70 +26,83 @@ public class DBconnect {
         try {
             Class.forName(driver);
 
-              try {
+            try {
                 con = DriverManager.getConnection(url, name, pass);
                 st = con.createStatement();
             } catch (SQLException ex) {
                 System.out.println("NOT Connected!!");
-           }
+            }
 
         } catch (ClassNotFoundException ex) {
             Logger.getLogger(DBconnect.class.getName()).log(Level.SEVERE, null, ex);
         }
     }
-    
-    public Connection GetCon(){return con;}
-    
+
+    public Connection GetCon() {
+        return con;
+    }
+
     public ResultSet URLSelect(int U_WordID) {
         try {
             String q = "SELECT * FROM `URL` WHERE U_WordID=" + U_WordID;
             rs = st.executeQuery(q);
 
-//            while (rs.next()) {
-//                String x = rs.getString("HallNumber");
-//                String y = rs.getString("NumofSeats");
-//                 String y1 = rs.getString("NumofRows");
-//                System.out.println(x + " " + y+ " " + y1);
-//            }
         } catch (Exception e) {
-            System.out.println("Select Failed!!");
+            System.out.println("URL Select Failed!!");
         }
         return rs;
     }
 
-    public ResultSet WordSelect(String Name)  {
+    public String WordSelect(String Name) {
         try {
-            String q = "SELECT * FROM `Word` WHERE Name='" + Name+"'";
+
+            String q = "SELECT * FROM `Word` WHERE Name='" + Name + "'";
             rs = st.executeQuery(q);
+            try {
+                if (rs.next()) {
+                    String x = rs.getString("WordID");
+                    rs.close();
+                    return x;
+                }
+
+            } catch (SQLException ex) {
+                Logger.getLogger(DBconnect.class.getName()).log(Level.SEVERE, null, ex);
+            }
+
         } catch (Exception e) {
             System.out.println(e);
         }
-        return rs;
+
+        return "";
     }
 
-    public void WordInsert(String Name){
+    public void WordInsert(String Name) {
         try {
-            String q = "INSERT INTO `Word`(`WordID`, `Name`) VALUES (null,'"+Name+"')";
+            String q = "INSERT INTO `Word`(`WordID`, `Name`) VALUES (null,'" + Name + "')";
             st.executeUpdate(q);
 
         } catch (Exception e) {
-            System.out.println("Insertion Failed!!");
+            System.out.println("Word Insertion Failed!!");
         }
 
     }
-    public void URLInsert(String Name,int Word_pri, String U_WordID,int PageRank) {
+
+    public void URLInsert(String Name, int Word_pri, String U_WordID, int PageRank) {
         try {
 
             String q;
-            q = "INSERT INTO `URL`(`ID`, `Name`, `Word_Pri`, `U_WordID`, `PageRabk`) VALUES (null,'"+Name+"',"+Word_pri+","+U_WordID+","+PageRank+")";;
+            q = "INSERT INTO `URL`(`ID`, `Name`, `Word_Pri`, `U_WordID`, `PageRabk`) VALUES (null,'" + Name + "'," + Word_pri + "," + U_WordID + "," + PageRank + ")";;
+            System.out.println("Link : " + q);
+
             st.executeUpdate(q);
 
         } catch (Exception e) {
-            System.out.println("Insertion Failed");
+            System.out.println("URL Insertion Failed");
         }
     }
-    public void URLUpdate(String ID,String Name,int Word_pri, String U_WordID,int PageRank ) {
-        try{
+
+    public void URLUpdate(String ID, String Name, int Word_pri, String U_WordID, int PageRank) {
+        try {
             String q;
             q = "UPDATE `URL` SET `Name`='" + Name + "',`Word_Pri`=" + Word_pri + ",`U_WordID`=" + U_WordID + ",`PageRabk`=" + PageRank + " WHERE `ID`=" + ID;
             st.executeUpdate(q);
@@ -100,17 +113,15 @@ public class DBconnect {
     }
 
     public void URLdelete(String ID) {
-         try{
+        try {
             String q;
-            q = "DELETE FROM `URL` WHERE `ID`="+ID;
+            q = "DELETE FROM `URL` WHERE `ID`=" + ID;
             st.executeUpdate(q);
 
         } catch (Exception e) {
             System.out.println("Delete Failed");
         }
     }
-
-
 
 }
 
