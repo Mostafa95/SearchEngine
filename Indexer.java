@@ -1,9 +1,4 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
-package indexer;
+package sephase1;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -32,26 +27,22 @@ import org.jsoup.select.Elements;
  *
  * @author mostafa
  */
-public class Indexer {
+public class Indexer extends Thread {
 
-    /**
-     * @param args the command line arguments
-     */
-    public static void main(String[] args) throws SQLException, ParserConfigurationException {
+    public void run() {
         DBconnect con = new DBconnect();
         int MAXStrSz = 16, MINStrSz = 3, PageRank = 0;
-        String parser = "[ `~!@#$^&*()-=>><<{};:\"\\,<>\\|\'\\. ]", URL_Link = "";//http://jsoup.org/
+        String parser = "[ `~!@#$^&*()-=>><<{};:\"\\,<>\\|\'\\. ]", URL_Link = "";
 
         PorterStemmer _Stem = new PorterStemmer();
-//String temp="";
-// Document doc = Jsoup.connect(URL_Link).get();
+
         try (BufferedReader read = new BufferedReader(new FileReader("/home/mostafa/NetBeansProjects/Indexer/HTMLs/State.txt"))) {
             Document doc = null;
             int cnt = 1;
             while (read.ready()) {
                 HashMap Hash = new HashMap();
                 URL_Link = read.readLine();
-                System.out.println(URL_Link);
+                //System.out.println(URL_Link);
                 File input = new File("/home/mostafa/NetBeansProjects/Indexer/HTMLs/" + cnt++ + ".html");
                 doc = Jsoup.parse(input, "UTF-8", "");
 
@@ -99,7 +90,7 @@ public class Indexer {
                     // System.out.println(e.text());
                 }
 //
-// parse meta // pri+100
+                // parse meta // pri+100
                 Elements Meta = doc.getElementsByTag("meta");
                 String temp = Meta.attr("content");
                 String[] str = temp.split(parser);
@@ -120,7 +111,7 @@ public class Indexer {
                     }
                     // System.out.println(e.text());
                 }
-//            // parse title // pri+1000
+                // parse title // pri+1000
                 Elements title = doc.getElementsByTag("title");
                 String Wordstitle[], titletext;
                 titletext = title.text();
@@ -141,8 +132,9 @@ public class Indexer {
                     }
                     // System.out.println(e.text());
                 }
-                ResultSet rs;
-                System.out.println(Hash.size());
+               
+               String rs="";
+                
                 Iterator it = Hash.entrySet().iterator();
                 while (it.hasNext()) {
                     Map.Entry pair = (Map.Entry) it.next();
@@ -151,41 +143,37 @@ public class Indexer {
 
                     rs = con.WordSelect(WordName);
 
-                    if (!rs.next()) { // Word doesn't exist in DB
+                    if (rs.isEmpty()) { // Word doesn't exist in DB
                         con.WordInsert(WordName);
 
-                        ResultSet rs2 = con.WordSelect(WordName);
+                        rs = con.WordSelect(WordName);
 
-                        if (rs2.next() == false) {
+                        if (rs.isEmpty()) {
                             System.out.println("False");
                         } else {
-                            String WordID = rs2.getString("WordID");
-
-                            con.URLInsert(URL_Link, WordFreq, WordID, PageRank);
-
+                            con.URLInsert(URL_Link, WordFreq, rs, PageRank);
                         }
                     } else {
-                        String WordID = rs.getString("WordID");
-                        con.URLInsert(URL_Link, WordFreq, WordID, PageRank);
+                        con.URLInsert(URL_Link, WordFreq, rs, PageRank);
                     }
 
-                    it.remove(); // avoids a ConcurrentModificationException
+                    // it.remove(); // avoids a ConcurrentModificationException
                 }
 
-//            for (Element e : Hyperlink) {
-//                System.out.println(e.text());
-//            }
             }
-            try {
-                con.GetCon().close();
-            } catch (SQLException se) {
-                System.out.println("NOT CLosed !!");
-            }
+
         } catch (IOException ex) {
 
             System.out.println("Error");
+        }
 
+        try {
+            con.GetCon().close();
+        } catch (SQLException se) {
+            System.out.println("NOT CLosed !!");
         }
     }
+
 }
+    
 
