@@ -57,6 +57,7 @@ public class Indexer extends Thread {
                     }
                     // stem
 
+
                     Word = Word.toLowerCase();
                     Word = _Stem.stem(Word);
                     Object val = Hash.get(Word);
@@ -89,8 +90,11 @@ public class Indexer extends Thread {
                     }
                     // System.out.println(e.text());
                 }
-//
+
+
                 // parse meta // pri+100
+
+
                 Elements Meta = doc.getElementsByTag("meta");
                 String temp = Meta.attr("content");
                 String[] str = temp.split(parser);
@@ -111,7 +115,10 @@ public class Indexer extends Thread {
                     }
                     // System.out.println(e.text());
                 }
+
                 // parse title // pri+1000
+
+
                 Elements title = doc.getElementsByTag("title");
                 String Wordstitle[], titletext;
                 titletext = title.text();
@@ -132,9 +139,11 @@ public class Indexer extends Thread {
                     }
                     // System.out.println(e.text());
                 }
+
                
                String rs="";
                 
+
                 Iterator it = Hash.entrySet().iterator();
                 while (it.hasNext()) {
                     Map.Entry pair = (Map.Entry) it.next();
@@ -142,6 +151,7 @@ public class Indexer extends Thread {
                     int WordFreq = (int) pair.getValue();
 
                     rs = con.WordSelect(WordName);
+
 
                     if (rs.isEmpty()) { // Word doesn't exist in DB
                         con.WordInsert(WordName);
@@ -162,18 +172,19 @@ public class Indexer extends Thread {
 
             }
 
+
         } catch (IOException ex) {
 
             System.out.println("Error");
-        }
 
         try {
             con.GetCon().close();
         } catch (SQLException se) {
             System.out.println("NOT CLosed !!");
+
         }
     }
-
+}
 }
     
 
