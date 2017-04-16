@@ -1,18 +1,13 @@
 
-package sephase1;
+package searchengine;
 
 import java.util.concurrent.TimeUnit;
 
-
-public class SEphase1 {
+public class SearchEngine {
 
     
     public static void main(String[] args) throws InterruptedException {
-       
-        
         (new CrawlerTH()).start();
-        TimeUnit.SECONDS.sleep(5);
-        (new Indexer()).start();
     }
-    
 }
+

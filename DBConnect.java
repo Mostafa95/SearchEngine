@@ -1,4 +1,9 @@
-package sephase1;
+/*
+ * To change this license header, choose License Headers in Project Properties.
+ * To change this template file, choose Tools | Templates
+ * and open the template in the editor.
+ */
+package searchengine;
 
 import java.sql.Connection;
 import java.sql.DriverManager;
@@ -92,7 +97,7 @@ public class DBconnect {
 
             String q;
             q = "INSERT INTO `URL`(`ID`, `Name`, `Word_Pri`, `U_WordID`, `PageRabk`) VALUES (null,'" + Name + "'," + Word_pri + "," + U_WordID + "," + PageRank + ")";;
-            System.out.println("Link : " + q);
+            System.out.println("Link : " + Name + " Inserted ..");
 
             st.executeUpdate(q);
 

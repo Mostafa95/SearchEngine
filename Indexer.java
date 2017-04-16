@@ -1,4 +1,9 @@
-package sephase1;
+/*
+ * To change this license header, choose License Headers in Project Properties.
+ * To change this template file, choose Tools | Templates
+ * and open the template in the editor.
+ */
+package searchengine;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -28,7 +33,10 @@ import org.jsoup.select.Elements;
  * @author mostafa
  */
 public class Indexer extends Thread {
-
+     public int cnt = 0;
+     Indexer(int Visited){
+         cnt=Visited;
+     }
     public void run() {
         DBconnect con = new DBconnect();
         int MAXStrSz = 16, MINStrSz = 3, PageRank = 0;
@@ -38,7 +46,7 @@ public class Indexer extends Thread {
 
         try (BufferedReader read = new BufferedReader(new FileReader("/home/mostafa/NetBeansProjects/Indexer/HTMLs/State.txt"))) {
             Document doc = null;
-            int cnt = 1;
+           
             while (read.ready()) {
                 HashMap Hash = new HashMap();
                 URL_Link = read.readLine();
@@ -56,7 +64,6 @@ public class Indexer extends Thread {
                         continue;
                     }
                     // stem
-
 
                     Word = Word.toLowerCase();
                     Word = _Stem.stem(Word);
@@ -90,11 +97,9 @@ public class Indexer extends Thread {
                     }
                     // System.out.println(e.text());
                 }
-
+//
 
                 // parse meta // pri+100
-
-
                 Elements Meta = doc.getElementsByTag("meta");
                 String temp = Meta.attr("content");
                 String[] str = temp.split(parser);
@@ -117,8 +122,6 @@ public class Indexer extends Thread {
                 }
 
                 // parse title // pri+1000
-
-
                 Elements title = doc.getElementsByTag("title");
                 String Wordstitle[], titletext;
                 titletext = title.text();
@@ -140,9 +143,7 @@ public class Indexer extends Thread {
                     // System.out.println(e.text());
                 }
 
-               
-               String rs="";
-                
+                String rs = "";
 
                 Iterator it = Hash.entrySet().iterator();
                 while (it.hasNext()) {
@@ -151,7 +152,6 @@ public class Indexer extends Thread {
                     int WordFreq = (int) pair.getValue();
 
                     rs = con.WordSelect(WordName);
-
 
                     if (rs.isEmpty()) { // Word doesn't exist in DB
                         con.WordInsert(WordName);
@@ -172,19 +172,17 @@ public class Indexer extends Thread {
 
             }
 
-
         } catch (IOException ex) {
 
             System.out.println("Error");
 
-        try {
-            con.GetCon().close();
-        } catch (SQLException se) {
-            System.out.println("NOT CLosed !!");
+            try {
+                con.GetCon().close();
+            } catch (SQLException se) {
+                System.out.println("NOT CLosed !!");
 
+            }
         }
     }
 }
-}
-    
 

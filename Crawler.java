@@ -3,7 +3,7 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-package sephase1;
+package searchengine;
 
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
@@ -25,7 +25,6 @@ import org.jsoup.select.Elements;
 
 public class Crawler extends Thread {
 
-    public int thr;
     public static ConcurrentHashMap<String, Integer> Vis_URL = new ConcurrentHashMap<String, Integer>();
     public int maxdepth = 10;
     public int VisUrlSz = 0;
@@ -51,9 +50,9 @@ public class Crawler extends Thread {
         if (val == 0) { // System.out.println("Before " +
             // Thread.currentThread().getId() + " " + site + " " +
             // val);
-            if (Vis_URL.replace(site, 0, 1)) {
+            Vis_URL.replace(site, 0, 1);
                 //System.out.println(site + " " + Vis_URL.get(site));
-            }
+            
             return true;
         }
         return false;
@@ -68,9 +67,9 @@ public class Crawler extends Thread {
 
     public void processPage(String URL_Link, int depth) throws InterruptedException, MalformedURLException {
 
-        if (VisUrlSz >= 8) {
-            return;
-        }
+//        if (VisUrlSz >= 10) {
+//            return;
+//        }
 
         try {
             URL RobotURL = new URL(URL_Link);
@@ -82,8 +81,8 @@ public class Crawler extends Thread {
                     new InputStreamReader(new URL(Host + "/robots.txt").openStream()))) {//temp1 + "robots.txt 
                 //System.out.println("B3d " +  e.attr("abs:href"));
                 String line = null;
-                cnt = 1;
-                while ((line = in.readLine()) != null && ++cnt < 50) {
+                int tcnt = 1;
+                while ((line = in.readLine()) != null && ++tcnt < 50) {
 
                     if (line.startsWith("Disallow")) {
                         try (BufferedWriter rob = new BufferedWriter(
@@ -99,7 +98,7 @@ public class Crawler extends Thread {
                                     if (te.charAt(i) == '*') {
                                         te2 += "(.*)";
                                     }
-                                    te2 += te.charAt(i);
+                                    else te2 += te.charAt(i);
                                 }
 //                                System.out.println("teStre " + te + "// te2String " + te2);
 //                                System.out.println(Host);
@@ -125,22 +124,13 @@ public class Crawler extends Thread {
             System.out.println("Could not create URL !!");
         }
 
-        boolean ha = torplc(URL_Link);
-        if (ha) {
-            System.out.println(URL_Link + " " + Vis_URL.get(URL_Link));
-        }
+        torplc(URL_Link);
+        
 
         // System .out.println(x);
         if (URL_Link.endsWith("/")) {
             URL_Link = URL_Link.substring(0, URL_Link.length() - 1);
         }
-        // String paramValue = "param\\with\\backslash";
-//        String yourURLStr="";
-//        try {
-//            yourURLStr = URL_Link + java.net.URLEncoder.encode(paramValue, "UTF-8");
-//        } catch (UnsupportedEncodingException ex) {
-//            Logger.getLogger(Crawler.class.getName()).log(Level.SEVERE, null, ex);
-//        }
 
         Document doc = null;
         try {
@@ -183,15 +173,17 @@ public class Crawler extends Thread {
         while (it.hasNext()) {
             Map.Entry pair = (Map.Entry) it.next();
             if (Check(pair.getKey().toString(), (int) pair.getValue())) {
+                
                 processPage(pair.getKey().toString(), depth + 1);
+                
             }
             // it.remove();// avoids a ConcurrentModificationException
         }
     }
 
-    public void mainprocessPage(String URL, int t, ConcurrentHashMap<String, Integer> Vis, int cnter) {
+    public void mainprocessPage(String URL, ConcurrentHashMap<String, Integer> Vis, int cnter) {
         Vis_URL.putAll(Vis);
-        thr = t;
+       
         this.cnt = cnter;
         Document doc = null;
         try {
@@ -206,48 +198,20 @@ public class Crawler extends Thread {
         } catch (IOException e) {
             System.out.println(e);
         }
-
-        // e3mel state l awel wa7eddddd haaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaammmmmmmmmm
+        torplc(URL);
+        towrite(URL);
+        
         Elements temp = doc.body().getElementsByAttribute("href");
         for (Element e : temp) {
             tovis(e.attr("abs:href"));
             // System.out.println("abl " +  e.attr("abs:href"));
+            // String temp1 = e.attr("abs:href");
 
-            String temp1 = e.attr("abs:href");
-
-//            try (BufferedReader in = new BufferedReader(
-//                    new InputStreamReader(new URL(temp1 + "robots.txt").openStream()))) {//temp1 + "robots.txt 
-//                //System.out.println("B3d " +  e.attr("abs:href"));
-//                String line = null;
-//                while ((line = in.readLine()) != null) {
-//
-//                    if (line.startsWith("Disallow")) {
-//                        try (BufferedWriter rob = new BufferedWriter(
-//                                new FileWriter("/home/mostafa/NetBeansProjects/Indexer/HTMLs/robot.txt", true))) {
-//
-//                            rob.write(line.substring(9));
-//                            rob.newLine();
-//
-//                        } catch (IOException e1) {
-//
-//                            System.out.println(e1);
-//                        }
-//                    }
-//                }
-//            } catch (IOException e1) {
-//                continue;
-//            } catch (IllegalArgumentException ee) {
-//                System.out.println(temp1);
-//            }
         }
     }
 
     @Override
     public void run() {
-        // int pos = (int) (Thread.currentThread().getId() % Vis_URL.size());
-        //
-        // String l = (String) Vis_URL.keySet().toArray()[pos];
-        // processPage(l, 1);
 
         Iterator<?> it = Vis_URL.entrySet().iterator();
         while (it.hasNext()) {
@@ -268,4 +232,3 @@ public class Crawler extends Thread {
     }
 
 }
-

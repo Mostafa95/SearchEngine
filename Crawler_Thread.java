@@ -1,6 +1,9 @@
-
-package sephase1;
-
+/*
+ * To change this license header, choose License Headers in Project Properties.
+ * To change this template file, choose Tools | Templates
+ * and open the template in the editor.
+ */
+package searchengine;
 
 import java.io.BufferedReader;
 import java.io.FileReader;
@@ -26,8 +29,6 @@ public class CrawlerTH extends Thread{
     public static ConcurrentHashMap<String, Integer> Vis_URLState = new ConcurrentHashMap<String, Integer>();
 
     public void run()  {
-        // C.mainprocessPage(url, 4, Vis_URLState, 0);
-
         int thrs;
 
         System.out.println("Choose how many threads to operate");
@@ -50,9 +51,11 @@ public class CrawlerTH extends Thread{
         }
 
         Crawler MainC = new Crawler();
-        MainC.mainprocessPage(urll, thrs, Vis_URLState, (int) Vis_URLState.mappingCount());
+        MainC.mainprocessPage(urll, Vis_URLState, (int) Vis_URLState.mappingCount());
         for (int i = 0; i < thrs; i++) {
+            
             (new Crawler()).start();
+            
             try {
                 TimeUnit.SECONDS.sleep((long) ((i + 3) * 0.3));
             } catch (InterruptedException ex) {
@@ -60,6 +63,8 @@ public class CrawlerTH extends Thread{
             }
         }
         
+        // Create Indexer Thread
+        (new Indexer( (int) Vis_URLState.mappingCount()) ).start();
     }
 
 }
