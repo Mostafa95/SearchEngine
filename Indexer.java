@@ -1,9 +1,3 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
-package searchengine;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -12,8 +6,10 @@ import java.io.IOException;
 import java.io.StringReader;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
@@ -34,7 +30,9 @@ import org.jsoup.select.Elements;
  */
 public class Indexer extends Thread {
      public int cnt = 0;
+     public List < ArrayList<Integer>> l = new ArrayList<>();
      Indexer(int Visited){
+         //l.add(1);
          cnt=Visited;
      }
     public void run() {
@@ -185,4 +183,3 @@ public class Indexer extends Thread {
         }
     }
 }
-
