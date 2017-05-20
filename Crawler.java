@@ -1,9 +1,3 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
-package searchengine;
 
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
@@ -13,9 +7,12 @@ import java.io.InputStreamReader;
 import java.io.UnsupportedEncodingException;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
+import java.util.Queue;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import org.jsoup.Jsoup;
@@ -25,34 +22,59 @@ import org.jsoup.select.Elements;
 
 public class Crawler extends Thread {
 
+    /**
+     *
+     */
     public static ConcurrentHashMap<String, Integer> Vis_URL = new ConcurrentHashMap<String, Integer>();
+    public static ConcurrentHashMap<String, String> Hashed_URL = new ConcurrentHashMap<String, String>();
+    public static Queue<String> To_Vis_URL = new ConcurrentLinkedQueue<String>();
+    public static ConcurrentHashMap<String, Integer> Ranking = new ConcurrentHashMap<String, Integer>();
+
     public int maxdepth = 10;
-    public int VisUrlSz = 0;
-    public static int cnt = 0;
+    public static int VisUrlSz = 0;
+    public static int cnt;
     public Number statenum = 0;
     public boolean flag = true;
+    public int time;
 
-    public synchronized boolean torplc(String site) {
-        return Vis_URL.replace(site, 0, 1);
+    Crawler(int t) {
+        time = t;
+    }
+
+    public ConcurrentHashMap<String, Integer> GetHashRank (){
+        return Ranking;
+    }
+    
+    public synchronized void Visited(String site) {
+        Vis_URL.put(site, 1);
+    }
+
+    public synchronized void SetHash(String site, Document doc) {
+
+        // Vis for Freq array
+        Elements e = doc.getElementsByTag("title");
+        String title = e.text();
+        e = doc.getElementsByTag("meta");
+        String meta = e.attr("content");
+        e = doc.getElementsByTag("a");
+        String a = e.text();
+
+        Hashed_URL.put(site, a + title + meta);
+        
+        
     }
 
     public synchronized void towrite(String site) {
-        try (BufferedWriter statefile = new BufferedWriter(new FileWriter("/home/mostafa/NetBeansProjects/Indexer/HTMLs/State.txt", true))) {
-            statefile.write(site + "/");//// HAAAAA<<<
+        try (BufferedWriter statefile = new BufferedWriter(new FileWriter("/home/mostafa/NetBeansProjects/WebApplication5/State", true))) {
+            statefile.write(site + "/");
             statefile.newLine();
         } catch (IOException e) {
             System.out.println(e);
         }
     }
 
-    //mmkn t substitie el sz da b countmapping btb2a more accurate 
-    public synchronized boolean Check(String site, int val) {
-        if (val == 0) { // System.out.println("Before " +
-            // Thread.currentThread().getId() + " " + site + " " +
-            // val);
-            Vis_URL.replace(site, 0, 1);
-                //System.out.println(site + " " + Vis_URL.get(site));
-            
+    public synchronized boolean Check(String site) {
+        if (Vis_URL.get(site) == null) {
             return true;
         }
         return false;
@@ -61,21 +83,33 @@ public class Crawler extends Thread {
     public synchronized void tovis(String site) {
 
         if (Vis_URL.get(site) == null) {
-            Vis_URL.put(site, 0);//    
+            To_Vis_URL.add(site);
         }
+        Object o = Ranking.get(site);
+        if (o == null) {
+            Ranking.put(site,1);
+            return;
+        }
+        Ranking.put(site, (int)o +1);
+
     }
 
+    public ConcurrentHashMap<String, Integer> GetRanking(){
+        return Ranking;
+    }
+    
     public void processPage(String URL_Link, int depth) throws InterruptedException, MalformedURLException {
 
-//        if (VisUrlSz >= 10) {
-//            return;
-//        }
-
+        if (VisUrlSz >= 900) {
+            System.out.println("ANA 5LST.. 25ern b2et farasha gamyleeeeh 2222!!");
+            return;
+        }
+        Visited(URL_Link);
         try {
             URL RobotURL = new URL(URL_Link);
 
             String Host = "http://" + RobotURL.getHost();
-            System.out.println("Host= " + Host);
+            //System.out.println("Host= " + Host);
             // String temp1 = link.attr("abs:href");
             try (BufferedReader in = new BufferedReader(
                     new InputStreamReader(new URL(Host + "/robots.txt").openStream()))) {//temp1 + "robots.txt 
@@ -86,7 +120,7 @@ public class Crawler extends Thread {
 
                     if (line.startsWith("Disallow")) {
                         try (BufferedWriter rob = new BufferedWriter(
-                                new FileWriter("/home/mostafa/NetBeansProjects/Indexer/HTMLs/robot.txt", true))) {
+                                new FileWriter("/home/mostafa/NetBeansProjects/WebApplication5/robot", true))) {
                             String y = line.substring(9);
                             rob.write(y);
                             rob.newLine();
@@ -97,8 +131,9 @@ public class Crawler extends Thread {
                                 for (int i = 0; i < te.length(); i++) {
                                     if (te.charAt(i) == '*') {
                                         te2 += "(.*)";
+                                    } else {
+                                        te2 += te.charAt(i);
                                     }
-                                    else te2 += te.charAt(i);
                                 }
 //                                System.out.println("teStre " + te + "// te2String " + te2);
 //                                System.out.println(Host);
@@ -124,9 +159,6 @@ public class Crawler extends Thread {
             System.out.println("Could not create URL !!");
         }
 
-        torplc(URL_Link);
-        
-
         // System .out.println(x);
         if (URL_Link.endsWith("/")) {
             URL_Link = URL_Link.substring(0, URL_Link.length() - 1);
@@ -137,25 +169,26 @@ public class Crawler extends Thread {
             if (URL_Link == "") {
                 return;
             }
-            System.out.println("D5l be " + URL_Link);
+           
             doc = Jsoup.connect(URL_Link).get();
         } catch (IOException e) {
             System.out.println("Doc Not connected to " + URL_Link);
             return;
         }
-        // System.out.println("3dda");
+        System.out.println("D5l be " + URL_Link);
+        SetHash(URL_Link, doc);
+        towrite(URL_Link);
+
         // HTML file
         try (BufferedWriter file = new BufferedWriter(
-                new FileWriter("/home/mostafa/NetBeansProjects/Indexer/HTMLs/" + this.cnt++ + ".html", false))) {
+                new FileWriter("/home/mostafa/NetBeansProjects/WebApplication5/HTML/" + this.cnt++ + ".html", false))) {
             file.write((doc.toString()));
             VisUrlSz++;
-            // System.out.println(URL_Link + " " + VisUrlSz);
+
         } catch (IOException e) {
             System.out.println(e);
         }
-        // State file
 
-        towrite(URL_Link);
         Elements links = null;
         try {
             links = doc.body().getElementsByAttribute("href");
@@ -164,67 +197,115 @@ public class Crawler extends Thread {
         }
         if (links != null) {
             for (Element link : links) {
-                tovis(link.attr("abs:href"));
+                tovis(link.attr("abs:href"));// In queue
             }
 
         }
-
-        Iterator<?> it = Vis_URL.entrySet().iterator();
-        while (it.hasNext()) {
-            Map.Entry pair = (Map.Entry) it.next();
-            if (Check(pair.getKey().toString(), (int) pair.getValue())) {
-                
-                processPage(pair.getKey().toString(), depth + 1);
-                
+        //System.out.println("size abl: " + To_Vis_URL.size());
+        while (!To_Vis_URL.isEmpty() && (int) (System.currentTimeMillis() / 1000) < time) {
+            String site = To_Vis_URL.poll();
+            if (Check(site)) {
+                processPage(site, depth + 1);
             }
-            // it.remove();// avoids a ConcurrentModificationException
         }
+        System.out.println("ANA 5LST.. 25ern b2et farasha gamyleeeeh !!");
+
     }
 
-    public void mainprocessPage(String URL, ConcurrentHashMap<String, Integer> Vis, int cnter) {
-        Vis_URL.putAll(Vis);
-       
-        this.cnt = cnter;
-        Document doc = null;
-        try {
-            doc = Jsoup.connect(URL).get();
-        } catch (IOException e) {
-            System.out.println(e);
+    public void mainprocessPage(String URL, HashMap<String, Integer> Vis) {
+        if (!Vis.isEmpty()) {
+            Vis_URL.putAll(Vis);
+        }
+        int cnter = Vis.size();
+        if (cnter != 0) {
+            cnt = cnter;
+        } else if (!Vis_URL.isEmpty()) {
+            cnt = Vis_URL.size();
+        } else {
+            cnt = 0;
         }
 
-        try (BufferedWriter file = new BufferedWriter(
-                new FileWriter("/home/mostafa/NetBeansProjects/Indexer/HTMLs/" + this.cnt++ + ".html", false))) {
-            file.write((doc.toString()));
-        } catch (IOException e) {
-            System.out.println(e);
-        }
-        torplc(URL);
-        towrite(URL);
-        
-        Elements temp = doc.body().getElementsByAttribute("href");
-        for (Element e : temp) {
-            tovis(e.attr("abs:href"));
-            // System.out.println("abl " +  e.attr("abs:href"));
-            // String temp1 = e.attr("abs:href");
+        //System.out.println("Main Process Man cnt = " + cnt);
+        if (Hashed_URL.isEmpty()) {
+            Document doc = null;
+            try {
+                doc = Jsoup.connect(URL).get();
+            } catch (IOException e) {
+                System.out.println(e);
 
+            }
+
+            try (BufferedWriter file = new BufferedWriter(
+                    new FileWriter("/home/mostafa/NetBeansProjects/WebApplication5/HTML/" + cnt++ + ".html", false))) {
+                file.write((doc.toString()));
+                VisUrlSz++;
+            } catch (IOException e) {
+                System.out.println(e);
+            }
+            Visited(URL);
+            SetHash(URL, doc);
+            towrite(URL);
+
+            Elements temp = doc.body().getElementsByAttribute("href");
+            for (Element e : temp) {
+                tovis(e.attr("abs:href"));
+            }
+        } else { // for freq
+            //System.out.println("d5l fy al else..");
+            String Lsite = "";
+            Iterator<?> it = Hashed_URL.entrySet().iterator();
+            while (it.hasNext()) {
+                Map.Entry pair = (Map.Entry) it.next();
+                String site = (String) pair.getKey();
+                String has = (String) pair.getValue();
+
+                Lsite = site;
+                Document doc = null;
+                try {
+                    doc = Jsoup.connect(site).get();
+                } catch (IOException e) {
+                    System.out.println(e);
+
+                }
+                //get meta + a + title
+                Elements e = doc.getElementsByTag("title");
+                String title = e.text();
+                e = doc.getElementsByTag("meta");
+                String meta = e.attr("content");
+                e = doc.getElementsByTag("a");
+                String a = e.text();
+
+                String temp = a + title + meta;
+                if (!has.equals(temp)) {
+//                    System.out.println("has= " + has + "site= " + a + title);
+//                    System.out.println("d5l fy to visit..2");
+                    tovis(site);
+                    Lsite = "";
+                } else {
+                    System.out.println("Not changed!!");
+                }
+            }
+            if (!Lsite.isEmpty()) {
+                tovis(Lsite);
+            }
         }
     }
 
     @Override
     public void run() {
+        // System.out.println("cnt is: " + cnt);
+        while (!To_Vis_URL.isEmpty()) {
 
-        Iterator<?> it = Vis_URL.entrySet().iterator();
-        while (it.hasNext()) {
-            Map.Entry pair = (Map.Entry) it.next();
-            if (Check(pair.getKey().toString(), (int) pair.getValue())) {
-                try {
-                    processPage(pair.getKey().toString(), 1);
-                    //break;
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                } catch (MalformedURLException ex) {
-                    Logger.getLogger(Crawler.class.getName()).log(Level.SEVERE, null, ex);
-                }
+            String site = To_Vis_URL.poll();
+//            System.out.println("Run ste is: " + site);
+
+            try {
+                processPage(site, 1);
+                break;
+            } catch (InterruptedException ex) {
+                Logger.getLogger(Crawler.class.getName()).log(Level.SEVERE, null, ex);
+            } catch (MalformedURLException ex) {
+                Logger.getLogger(Crawler.class.getName()).log(Level.SEVERE, null, ex);
             }
 
         }
