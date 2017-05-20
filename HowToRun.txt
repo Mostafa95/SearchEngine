@@ -1,0 +1,10 @@
+This project uses Java Servlets, on netbeans IDE, and MySQL Server as database on Xampp Apache distribution.
+
+
+To run this project:
+
+1- Include the two libraries in "Libraries" folder.
+2- Import src codes in the project.
+3- Create Database named as "SearchEngine" on MySQL server.
+4- configure server in DBconnect, in DBconnect instructor, to match your settings of Xampp.
+5- Run project.
